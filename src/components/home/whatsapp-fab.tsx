@@ -14,14 +14,15 @@ export function WhatsappFab() {
       href={WA_URL}
       target="_blank"
       rel="noopener noreferrer"
+      aria-label="WhatsApp İletişim Hattı"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className="fixed right-7 bottom-7 z-40 flex flex-col items-end"
+      className="fixed right-6 bottom-6 z-50 flex flex-col items-end cursor-pointer drop-shadow-xl"
     >
       {/* Tooltip */}
       <div
-        className={`pointer-events-none mb-2.5 rounded-xl border border-slate-100 bg-white px-4 py-2.5 text-[13px] font-bold text-slate-800 shadow-[0_4px_16px_rgba(0,0,0,0.1)] transition-all duration-200 ${
-          hovered ? "translate-x-0 opacity-100" : "translate-x-3 opacity-0"
+        className={`pointer-events-none mb-2 rounded-xl border border-slate-100 bg-white px-3.5 py-2 text-[13px] font-bold text-slate-800 shadow-[0_4px_20px_rgba(0,0,0,0.15)] transition-all duration-200 ${
+          hovered ? "translate-x-0 opacity-100" : "translate-x-2 opacity-0"
         }`}
       >
         {"Bize WhatsApp'tan Yazın"}
@@ -29,15 +30,17 @@ export function WhatsappFab() {
 
       {/* FAB button */}
       <div
-        className={`flex items-center justify-center bg-whatsapp text-white transition-all duration-200 animate-wa-pulse ${
+        style={{ backgroundColor: "#25D366" }}
+        className={`flex items-center justify-center text-white shadow-[0_6px_20px_rgba(37,211,102,0.45)] transition-all duration-200 hover:scale-105 active:scale-95 ${
           hovered
-            ? "h-[62px] w-[62px] rounded-[20px]"
-            : "h-[58px] w-[58px] rounded-[18px]"
+            ? "h-[62px] w-[62px] rounded-full"
+            : "h-[58px] w-[58px] rounded-full"
         }`}
       >
-        <MessageCircle className="h-7 w-7 fill-current" />
+        <MessageCircle className="h-8 w-8 fill-white text-[#25D366]" />
       </div>
     </a>
   );
 }
+
 

@@ -49,6 +49,7 @@ module.exports = {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        whatsapp: "#25D366",
       },
       borderRadius: {
         lg: "var(--radius)",

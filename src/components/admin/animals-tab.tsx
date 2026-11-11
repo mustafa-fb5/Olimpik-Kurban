@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   ChevronDown,
   ChevronUp,
+  Clock,
   Cloud,
   Hash,
   Info,
@@ -44,6 +45,7 @@ import {
   getSizeGroup,
   useSiteData,
   type Animal,
+  type Registration,
   type Shareholder,
 } from "@/lib/site-data";
 
@@ -118,6 +120,10 @@ export function AnimalsTab({
     }
   };
 
+  const pendingCount = service.registrations.filter(
+    (r) => r.status === "pending" && !!r.animalId,
+  ).length;
+
   return (
     <div
       style={{
@@ -131,9 +137,17 @@ export function AnimalsTab({
       {/* Top bar */}
       {isMobile ? (
         <div>
-          <h3 className="text-lg font-extrabold text-[#1E293B]">
-            Kurbanlık Listesi
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-lg font-extrabold text-[#1E293B]">
+              Kurbanlık Listesi
+            </h3>
+            {pendingCount > 0 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
+                <Clock className="h-3 w-3" />
+                {pendingCount} onay bekleyen
+              </span>
+            )}
+          </div>
           <p className="mt-1 text-[13px] font-medium text-slate-500">
             Toplam {animals.length} kurbanlık kayıtlı.
           </p>
@@ -167,9 +181,17 @@ export function AnimalsTab({
       ) : (
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-extrabold text-[#1E293B]">
-              Kurbanlık Listesi
-            </h3>
+            <div className="flex items-center gap-2.5">
+              <h3 className="text-lg font-extrabold text-[#1E293B]">
+                Kurbanlık Listesi
+              </h3>
+              {pendingCount > 0 && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
+                  <Clock className="h-3 w-3" />
+                  {pendingCount} onay bekleyen başvuru
+                </span>
+              )}
+            </div>
             <p className="mt-1 text-[13px] font-medium text-slate-500">
               Toplam {animals.length} kurbanlık kayıtlı.
             </p>
@@ -266,6 +288,17 @@ export function AnimalsTab({
                 onRemoveSlot={(slotIndex) =>
                   service.removeAnimalShareholder(animal.id, slotIndex)
                 }
+                pendingRegistrations={service.registrations.filter(
+                  (r) => r.status === "pending" && r.animalId === animal.id,
+                )}
+                onApprovePending={async (regId) => {
+                  const ok = await service.approveRegistration(regId);
+                  if (ok) {
+                    toast.success("Hissedar başvurusu onaylandı ve slota atandı.");
+                  } else {
+                    toast.error("Başvuru onaylanamadı (slot dolu olabilir).");
+                  }
+                }}
               />
             ))}
           </div>
@@ -399,6 +432,8 @@ function AnimalCard({
   onToggleTekDuzen,
   onToggleVekalet,
   onRemoveSlot,
+  pendingRegistrations = [],
+  onApprovePending,
 }: {
   animal: Animal;
   expanded: boolean;
@@ -411,6 +446,8 @@ function AnimalCard({
   onToggleTekDuzen: (slotIndex: number, sh: Shareholder) => void;
   onToggleVekalet: (slotIndex: number, sh: Shareholder) => void;
   onRemoveSlot: (slotIndex: number) => void;
+  pendingRegistrations?: Registration[];
+  onApprovePending?: (regId: string) => void;
 }) {
   const [imgError, setImgError] = useState(false);
   const photoUrl = animal.photoUrl ?? "";
@@ -548,15 +585,26 @@ function AnimalCard({
               <ChevronDown className="h-4 w-4 text-slate-500" />
             )}
           </span>
-          <span
-            className={`rounded-lg px-1.5 py-0.5 text-[10px] font-extrabold ${
-              filledCount === 7
-                ? "bg-[#ECFDF5] text-[#047857]"
-                : "bg-[#FEF3C7] text-[#B45309]"
-            }`}
-          >
-            {filledCount} / 7
-          </span>
+          <div className="flex items-center gap-1">
+            {pendingRegistrations.length > 0 && (
+              <span
+                title={`${pendingRegistrations.length} onay bekleyen başvuru`}
+                className="inline-flex items-center gap-0.5 rounded-lg border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-extrabold text-amber-700 animate-pulse"
+              >
+                <Clock className="h-2.5 w-2.5" />
+                {pendingRegistrations.length} Onay
+              </span>
+            )}
+            <span
+              className={`rounded-lg px-1.5 py-0.5 text-[10px] font-extrabold ${
+                filledCount === 7
+                  ? "bg-[#ECFDF5] text-[#047857]"
+                  : "bg-[#FEF3C7] text-[#B45309]"
+              }`}
+            >
+              {filledCount} / 7
+            </span>
+          </div>
         </button>
       </div>
 
@@ -567,13 +615,19 @@ function AnimalCard({
             const isEmpty = !sh.name;
             const isTekDuzen = sh.isTekDuzen === true;
             const hasVekalet = sh.hasVekalet === true;
+            const pendingReg = isEmpty
+              ? pendingRegistrations.find((p) => p.slotIndex === i)
+              : undefined;
+
             return (
               <div
                 key={i}
                 onClick={() => onSelectSlot(i, sh)}
                 className={`flex cursor-pointer items-center rounded-md px-2 py-1.5 ${
                   isEmpty
-                    ? "border border-slate-200 bg-slate-50"
+                    ? pendingReg
+                      ? "border-[1.5px] border-amber-400 bg-amber-50/70"
+                      : "border border-slate-200 bg-slate-50"
                     : isTekDuzen
                       ? "border-[1.5px] border-emerald-500 bg-[#ECFDF5]"
                       : "border border-slate-200 bg-white"
@@ -582,7 +636,9 @@ function AnimalCard({
                 <div
                   className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white ${
                     isEmpty
-                      ? "bg-slate-300"
+                      ? pendingReg
+                        ? "bg-amber-500"
+                        : "bg-slate-300"
                       : isTekDuzen
                         ? "bg-emerald-500"
                         : "bg-slate-500"
@@ -593,9 +649,27 @@ function AnimalCard({
 
                 <div className="ml-1.5 min-w-0 flex-1">
                   {isEmpty ? (
-                    <span className="text-[10px] italic text-slate-400">
-                      Boş Hisse — Ata
-                    </span>
+                    pendingReg ? (
+                      <div>
+                        <div className="flex items-center gap-1">
+                          <span className="truncate text-[10px] font-extrabold text-amber-900">
+                            {pendingReg.name}
+                          </span>
+                          <span className="rounded bg-amber-200/80 px-1 py-0.2 text-[8px] font-bold text-amber-800">
+                            Onay Bekliyor
+                          </span>
+                        </div>
+                        {pendingReg.phone && (
+                          <div className="text-[9px] text-amber-700">
+                            {pendingReg.phone}
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-[10px] italic text-slate-400">
+                        Boş Hisse — Ata
+                      </span>
+                    )
                   ) : (
                     <div>
                       <div className="truncate text-[10px] font-bold text-slate-700">
@@ -609,6 +683,23 @@ function AnimalCard({
                     </div>
                   )}
                 </div>
+
+                {pendingReg && isEmpty && (
+                  <div
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex shrink-0 items-center gap-1"
+                  >
+                    <button
+                      type="button"
+                      title="Başvuruyu Onayla"
+                      onClick={() => onApprovePending?.(pendingReg.id)}
+                      className="inline-flex cursor-pointer items-center gap-0.5 rounded-md bg-[#0F9F6E] px-1.5 py-0.5 text-[9px] font-bold text-white hover:bg-[#0d8b60]"
+                    >
+                      <Check className="h-2.5 w-2.5" />
+                      Onayla
+                    </button>
+                  </div>
+                )}
 
                 {!isEmpty && (
                   <div

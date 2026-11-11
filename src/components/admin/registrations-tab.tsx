@@ -27,7 +27,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useSiteData, type Animal, type Registration } from "@/lib/site-data";
+import {
+  useSiteData,
+  getSizeGroup,
+  type Animal,
+  type Registration,
+} from "@/lib/site-data";
 
 const STATUS_OPTIONS = [
   { value: "Tümü", label: "Tüm Durumlar" },
@@ -69,13 +74,22 @@ export function RegistrationsTab({
 
   const groupFilterOptions = [
     "Tümü",
+    "Küçük Grup",
+    "Orta Grup",
+    "Büyük Grup",
     "Bağış Hisse",
-    ...service.groups.map((g) => g.name),
   ];
 
   const filtered = service.registrations.filter((reg) => {
     if (selectedGroupFilter === "Bağış Hisse") {
       if (reg.isDonation !== true) return false;
+    } else if (
+      selectedGroupFilter === "Küçük Grup" ||
+      selectedGroupFilter === "Orta Grup" ||
+      selectedGroupFilter === "Büyük Grup"
+    ) {
+      if (reg.isDonation === true) return false;
+      if (getSizeGroup(reg.group) !== selectedGroupFilter) return false;
     } else if (selectedGroupFilter !== "Tümü") {
       const groupField = (reg.group ?? "").toString().toLowerCase();
       const filterLower = selectedGroupFilter.toLowerCase();
