@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  Check,
   Download,
   Filter,
   ListFilter,
@@ -30,6 +31,7 @@ import { useSiteData, type Animal, type Registration } from "@/lib/site-data";
 
 const STATUS_OPTIONS = [
   { value: "Tümü", label: "Tüm Durumlar" },
+  { value: "Onay Bekleyenler", label: "Onay Bekleyenler" },
   { value: "Atananlar", label: "Atananlar" },
   { value: "Atanmayanlar", label: "Atanmayanlar" },
   { value: "Vekaleti Alınanlar", label: "Vekaleti Alınanlar" },
@@ -81,7 +83,9 @@ export function RegistrationsTab({
         return false;
     }
 
-    if (selectedStatusFilter !== "Tümü") {
+    if (selectedStatusFilter === "Onay Bekleyenler") {
+      if (reg.status !== "pending") return false;
+    } else if (selectedStatusFilter !== "Tümü") {
       const regNameLower = (reg.name ?? "").toString().trim().toLowerCase();
       const isAssigned = service.animals.some((animal) =>
         (animal.shareholders ?? []).some(
@@ -386,6 +390,11 @@ export function RegistrationsTab({
                         >
                           {isDonation ? "Bağış Hisse" : reg.group}
                         </span>
+                        {reg.status === "pending" && (
+                          <span className="ml-1.5 inline-block rounded-md border border-amber-300 bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800">
+                            Onay Bekliyor
+                          </span>
+                        )}
                       </td>
 
                       {/* Note */}
@@ -416,6 +425,24 @@ export function RegistrationsTab({
                       {/* Actions */}
                       <td className="px-6 py-2">
                         <div className="flex items-center gap-2">
+                          {reg.status === "pending" && (
+                            <button
+                              type="button"
+                              title="Başvuruyu Onayla"
+                              onClick={async () => {
+                                const ok = await service.approveRegistration(reg.id);
+                                if (ok) toast.success(`"${reg.name}" başvurusu onaylandı, hisse atandı.`);
+                                else
+                                  toast.error(
+                                    "Onaylanamadı: hisse artık dolu olabilir veya hayvan silinmiş.",
+                                  );
+                              }}
+                              className="inline-flex cursor-pointer items-center gap-1 rounded-full bg-[#0F9F6E] px-3 py-2 text-xs font-bold text-white hover:bg-[#0d8b60]"
+                            >
+                              <Check className="h-4 w-4" />
+                              Onayla
+                            </button>
+                          )}
                           <button
                             type="button"
                             title="Kurbanlığa Ata"

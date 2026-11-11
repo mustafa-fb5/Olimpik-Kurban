@@ -39,7 +39,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cloudinaryService, pickImage } from "@/lib/cloudinary";
-import { useSiteData, type Animal, type Shareholder } from "@/lib/site-data";
+import {
+  SIZE_GROUPS,
+  getSizeGroup,
+  useSiteData,
+  type Animal,
+  type Shareholder,
+} from "@/lib/site-data";
 
 export function AnimalsTab({
   isMobile,
@@ -270,7 +276,7 @@ export function AnimalsTab({
       {(addOpen || editAnimal) && (
         <AnimalFormDialog
           animal={editAnimal}
-          groups={service.groups.map((g) => g.name)}
+          groups={[...SIZE_GROUPS]}
           onClose={() => {
             setAddOpen(false);
             setEditAnimal(null);
@@ -673,8 +679,8 @@ function AnimalFormDialog({
 }) {
   const [kesimNo, setKesimNo] = useState(animal?.kesimNo ?? "");
   const [earTag, setEarTag] = useState(animal?.earTag ?? "");
-  const [group, setGroup] = useState(
-    animal?.group || (groups[0] ?? "1. Grup"),
+  const [group, setGroup] = useState<string>(
+    animal ? getSizeGroup(animal.group) : (groups[0] ?? "Küçük Grup"),
   );
   const [kilogram, setKilogram] = useState(animal?.kilogram ?? "");
 
@@ -815,6 +821,17 @@ function ShareholderDialog({
         </DialogHeader>
 
         <div className="mt-2 space-y-4">
+          <button
+            type="button"
+            onClick={() => {
+              setName("Rezerve");
+              setPhone("");
+            }}
+            className="w-full cursor-pointer rounded-xl border border-amber-300 bg-amber-50 py-2.5 text-[13px] font-bold text-amber-800 hover:bg-amber-100"
+          >
+            Hızlı Rezerve (ana ekranda &quot;Dolu&quot; görünür)
+          </button>
+
           <LabeledField
             label="Ad Soyad"
             icon={<User className="h-5 w-5 text-slate-400" />}

@@ -35,7 +35,25 @@ export interface Registration {
   isTekDuzen: boolean;
   hasVekalet: boolean;
   createdAt: string;
+  /** Hisse başvurusu: başvurulan hayvan ve slot (0 tabanlı). */
+  animalId?: string;
+  slotIndex?: number;
+  /** "pending" = yönetici onayı bekliyor. Tanımsız/"approved" = onaylı. */
+  status?: "pending" | "approved";
   firestorePath?: string;
+}
+
+export const SIZE_GROUPS = ["Küçük Grup", "Orta Grup", "Büyük Grup"] as const;
+export type SizeGroup = (typeof SIZE_GROUPS)[number];
+
+/** Hayvanın grubunu 3 boyut grubundan birine eşler (eski "1. Grup" kayıtları dahil). */
+export function getSizeGroup(group: string | undefined | null): SizeGroup {
+  const g = (group ?? "").toString().trim().toLowerCase();
+  if (g.startsWith("küçük") || g.startsWith("kucuk") || g.startsWith("1.")) return "Küçük Grup";
+  if (g.startsWith("orta") || g.startsWith("2.")) return "Orta Grup";
+  if (g.startsWith("büyük") || g.startsWith("buyuk") || g.startsWith("3.") || g.startsWith("4."))
+    return "Büyük Grup";
+  return "Orta Grup";
 }
 
 export interface Shareholder {
@@ -209,6 +227,9 @@ function registrationFields(reg: Registration) {
     isTekDuzen: { booleanValue: reg.isTekDuzen ?? false },
     hasVekalet: { booleanValue: reg.hasVekalet ?? false },
     createdAt: { stringValue: reg.createdAt },
+    animalId: { stringValue: reg.animalId ?? "" },
+    slotIndex: { integerValue: String(reg.slotIndex ?? -1) },
+    status: { stringValue: reg.status ?? "approved" },
   };
 }
 
@@ -404,11 +425,88 @@ class SiteDataService {
       isTekDuzen: false,
       hasVekalet: false,
       createdAt: now.toISOString(),
+      status: "approved",
     };
     this.registrations.unshift(registration);
     this.notifyListeners();
     this.saveToLocal();
     await this.saveRegistrationToFirestore(registration);
+  }
+
+  /** Slot durumu: "empty" | "pending" (onay bekliyor) | "full" (dolu/rezerve). */
+  getSlotStatus(animal: Animal, slotIndex: number): "empty" | "pending" | "full" {
+    const sh = animal.shareholders[slotIndex];
+    if (sh && (sh.name ?? "").trim()) return "full";
+    const pending = this.getPendingRegistration(animal.id, slotIndex);
+    return pending ? "pending" : "empty";
+  }
+
+  /** Hayvan ve slota ait bekleyen (pending) başvuruyu bulur (varsa). */
+  getPendingRegistration(animalId: string, slotIndex: number): Registration | undefined {
+    return this.registrations.find(
+      (r) => r.status === "pending" && r.animalId === animalId && r.slotIndex === slotIndex,
+    );
+  }
+
+  /**
+   * Herkese açık hisse başvurusu. Slot boşsa "pending" kayıt oluşturur;
+   * yönetici onaylayınca slota yazılır. Slot müsait değilse false döner.
+   */
+  async applyForShare(args: {
+    animalId: string;
+    slotIndex: number;
+    name: string;
+    phone: string;
+  }): Promise<boolean> {
+    // Çakışmayı azaltmak için güncel veriyi çek.
+    await this.syncWithFirestore();
+    const animal = this.animals.find((a) => a.id === args.animalId);
+    if (!animal || animal.isSlaughtered) return false;
+    if (this.getSlotStatus(animal, args.slotIndex) !== "empty") return false;
+
+    const now = new Date();
+    const registration: Registration = {
+      id: String(now.getTime()),
+      name: args.name,
+      phone: args.phone,
+      address: "",
+      group: getSizeGroup(animal.group),
+      note: `${animal.kesimNo ? `${animal.kesimNo}. Kurbanlık` : animal.name} - Hisse ${args.slotIndex + 1}${animal.earTag ? ` (Küpe: ${animal.earTag})` : ""}`,
+      isDonation: false,
+      isTekDuzen: false,
+      hasVekalet: false,
+      createdAt: now.toISOString(),
+      animalId: animal.id,
+      slotIndex: args.slotIndex,
+      status: "pending",
+    };
+    this.registrations.unshift(registration);
+    this.notifyListeners();
+    this.saveToLocal();
+    await this.saveRegistrationToFirestore(registration);
+    return true;
+  }
+
+  /** Bekleyen başvuruyu onaylar: hisseyi hayvana yazar, kaydı onaylı yapar. */
+  async approveRegistration(id: string): Promise<boolean> {
+    const reg = this.registrations.find((r) => r.id === id);
+    if (!reg || !reg.animalId || reg.slotIndex === undefined) return false;
+    const animal = this.animals.find((a) => a.id === reg.animalId);
+    if (!animal) return false;
+    const current = animal.shareholders[reg.slotIndex];
+    if (current && (current.name ?? "").trim()) return false; // slot başkasına verilmiş
+
+    await this.updateAnimalShareholder(animal.id, reg.slotIndex, reg.name, reg.phone);
+    reg.status = "approved";
+    this.notifyListeners();
+    this.saveToLocal();
+    if (reg.firestorePath) await this.updateRegistrationInFirestore(reg);
+    return true;
+  }
+
+  /** Yöneticinin doğrudan hisse rezerve etmesi (ana ekranda "Dolu" görünür). */
+  reserveSlot(animalId: string, slotIndex: number, label = "Rezerve") {
+    return this.updateAnimalShareholder(animalId, slotIndex, label, "");
   }
 
   async deleteRegistration(id: string) {
@@ -714,10 +812,10 @@ class SiteDataService {
     try {
       const unsubAnimals = onSnapshot(
         collection(db, "animals"),
-        (snapshot) => {
+        (snapshot: any) => {
           if (!snapshot.empty) {
             const list: Animal[] = [];
-            snapshot.forEach((d) => {
+            snapshot.forEach((d: any) => {
               const data = d.data() as any;
               list.push({
                 id: d.id,
@@ -736,10 +834,10 @@ class SiteDataService {
             this.animals = list;
             this.isFirestoreError = false;
             this.saveToLocal();
-            this.notify();
+            this.notifyListeners();
           }
         },
-        (error) => {
+        (error: any) => {
           console.warn("Firestore animals listener warning (falling back to REST):", error);
         }
       );
@@ -809,6 +907,12 @@ class SiteDataService {
             isTekDuzen: f.isTekDuzen?.booleanValue ?? false,
             hasVekalet: f.hasVekalet?.booleanValue ?? false,
             createdAt: f.createdAt?.stringValue ?? "",
+            animalId: f.animalId?.stringValue || undefined,
+            slotIndex:
+              f.slotIndex?.integerValue !== undefined && Number(f.slotIndex.integerValue) >= 0
+                ? Number(f.slotIndex.integerValue)
+                : undefined,
+            status: (f.status?.stringValue as "pending" | "approved" | undefined) ?? "approved",
           };
         });
         loaded.sort((a, b) => (b.createdAt < a.createdAt ? -1 : b.createdAt > a.createdAt ? 1 : 0));

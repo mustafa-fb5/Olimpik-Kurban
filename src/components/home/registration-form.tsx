@@ -21,7 +21,7 @@ import {
 import { useSiteData } from "@/lib/site-data";
 import { useReveal } from "@/hooks/use-reveal";
 
-export function RegistrationForm() {
+export function RegistrationForm({ donationOnly = false }: { donationOnly?: boolean }) {
   const service = useSiteData();
   const texts = service.mainPageTexts;
   const activeGroups = service.groups
@@ -30,7 +30,8 @@ export function RegistrationForm() {
 
   const { ref, visible } = useReveal<HTMLElement>(0.15);
 
-  const [isDonation, setIsDonation] = useState(false);
+  const [isDonationState, setIsDonation] = useState(donationOnly);
+  const isDonation = donationOnly || isDonationState;
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -103,6 +104,7 @@ export function RegistrationForm() {
         ) : (
           <div>
             {/* Tab switcher */}
+            {!donationOnly && (
             <div className="px-5 pt-5">
               <div className="grid grid-cols-2 rounded-[18px] bg-slate-100 p-1">
                 <TabButton
@@ -119,6 +121,7 @@ export function RegistrationForm() {
                 />
               </div>
             </div>
+            )}
 
             {/* Form content */}
             <form onSubmit={submit} noValidate className="p-6 md:p-9">

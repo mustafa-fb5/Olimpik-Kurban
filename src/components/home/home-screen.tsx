@@ -5,8 +5,8 @@ import { Navbar, type SectionId } from "./navbar";
 import { HeroSection } from "./hero-section";
 import { FeaturesSection } from "./features-section";
 import { SearchSection } from "./search-section";
-import { PricingSection } from "./pricing-section";
 import { RegistrationForm } from "./registration-form";
+import { ShareSection } from "./share-section";
 import { FaqSection } from "./faq-section";
 import { FooterSection } from "./footer-section";
 import { WhatsappFab } from "./whatsapp-fab";
@@ -60,18 +60,11 @@ export function HomeScreen() {
 
         <div
           ref={(el) => {
-            sectionRefs.current.fiyatlar = el;
-          }}
-        >
-          <PricingSection onSelectGroup={() => scrollTo("kayit")} />
-        </div>
-
-        <div
-          ref={(el) => {
             sectionRefs.current.kayit = el;
           }}
         >
-          <RegistrationForm />
+          <ShareSection />
+          <RegistrationForm donationOnly />
         </div>
 
         <div

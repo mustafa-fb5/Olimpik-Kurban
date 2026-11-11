@@ -25,19 +25,16 @@ export function HeroSection({ onKayitTap, onSorgulaTap }: HeroSectionProps) {
 
   return (
     <section className="relative flex min-h-[650px] items-center justify-center overflow-hidden md:h-screen md:min-h-[700px]">
-      {/* Animated gradient background */}
+      {/* Background Image (Statik Büyükbaş Kurban Görseli) */}
       <div
-        className="absolute inset-0 bg-[length:200%_200%] animate-hero-bg"
+        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{
-          backgroundImage:
-            "linear-gradient(135deg, #064E3B 0%, #0F172A 35%, #1E293B 65%, #065F46 100%)",
+          backgroundImage: "url('/hero-cattle.jpg')",
         }}
       />
 
-      {/* Decorative circles */}
-      <div className="pointer-events-none absolute -top-[100px] -right-[100px] h-[400px] w-[400px] rounded-full bg-emerald-500/8 animate-glow" />
-      <div className="pointer-events-none absolute bottom-[100px] -left-[150px] h-[500px] w-[500px] rounded-full bg-emerald-600/6 animate-glow-reverse" />
-      <div className="pointer-events-none absolute top-[30%] right-[10%] h-[200px] w-[200px] rounded-full bg-amber-400/5 animate-glow" />
+      {/* Dark & Emerald Overlay (Okunabilirlik ve kurumsal ton için) */}
+      <div className="absolute inset-0 bg-gradient-to-r from-slate-950/85 via-slate-900/75 to-emerald-950/80" />
 
       {/* Grid pattern overlay */}
       <div

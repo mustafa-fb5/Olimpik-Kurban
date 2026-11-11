@@ -79,7 +79,6 @@ export function Navbar({ onScrollTo }: NavbarProps) {
           )}
           <NavItem label="Hisse Kaydı" onClick={() => scrollTo("kayit")} />
           <NavItem label="Kurbanını Gör" onClick={() => scrollTo("sorgula")} />
-          <NavItem label="Seçenekler" onClick={() => scrollTo("fiyatlar")} />
           <NavItem label="SSS" onClick={() => scrollTo("sss")} />
           <NavItem label="İletişim" onClick={() => scrollTo("footer")} />
 
@@ -140,7 +139,6 @@ export function Navbar({ onScrollTo }: NavbarProps) {
             )}
             <MobileMenuItem label="Hisse Kaydı" onClick={() => scrollTo("kayit")} />
             <MobileMenuItem label="Kurbanını Gör" onClick={() => scrollTo("sorgula")} />
-            <MobileMenuItem label="Seçenekler" onClick={() => scrollTo("fiyatlar")} />
             <MobileMenuItem label="SSS" onClick={() => scrollTo("sss")} />
             <MobileMenuItem label="İletişim" onClick={() => scrollTo("footer")} />
             <Link
