@@ -18,22 +18,30 @@ import {
   type SizeGroup,
 } from "@/lib/site-data";
 import { useReveal } from "@/hooks/use-reveal";
+import { useWindowWidth } from "@/components/admin/use-window-size";
 
 const TOTAL_SLOTS = 7;
 
 export function ShareSection() {
   const service = useSiteData();
+  const width = useWindowWidth();
+  const isMobile = width < 768;
   const { ref, visible } = useReveal<HTMLElement>(0.1);
   const [activeGroup, setActiveGroup] = useState<SizeGroup>(SIZE_GROUPS[0]);
   const [currentPage, setCurrentPage] = useState(0);
   const [target, setTarget] = useState<{ animal: Animal; slotIndex: number } | null>(null);
 
-  const PAGE_SIZE = 3;
+  const pageSize = isMobile ? 1 : 3;
   const animals = service.animals.filter((a) => !a.isSlaughtered);
   const byGroup = (g: SizeGroup) => animals.filter((a) => getSizeGroup(a.group) === g);
   const shown = byGroup(activeGroup);
-  const totalPages = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
-  const paginated = shown.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
+  const totalPages = Math.max(1, Math.ceil(shown.length / pageSize));
+  const paginated = shown.slice(currentPage * pageSize, (currentPage + 1) * pageSize);
+
+  // Sayfa boyutu ekran genişliğine göre değiştiğinde taşmayı önle
+  useEffect(() => {
+    setCurrentPage((p) => Math.min(p, Math.max(0, totalPages - 1)));
+  }, [pageSize, totalPages]);
 
   const handleGroupChange = (group: SizeGroup) => {
     setActiveGroup(group);
@@ -117,8 +125,8 @@ export function ShareSection() {
               </button>
             )}
 
-            {/* Animals Grid */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 min-[1201px]:grid-cols-3">
+            {/* Animals Grid / Carousel */}
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
               {paginated.map((animal) => (
                 <AnimalShareCard
                   key={animal.id}
