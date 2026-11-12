@@ -13,6 +13,7 @@ import {
   Info,
   KeyRound,
   LayoutGrid,
+  ListFilter,
   PawPrint,
   Pencil,
   Phone,
@@ -60,6 +61,7 @@ export function AnimalsTab({
   const animals = service.animals;
   const isCloudConfigured = cloudinaryService.isConfigured;
 
+  const [selectedGroupFilter, setSelectedGroupFilter] = useState<string>("Tümü");
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   // Dialog states
@@ -125,6 +127,13 @@ export function AnimalsTab({
     (r) => r.status === "pending" && !!r.animalId,
   ).length;
 
+  const groupOptions = ["Tümü", ...SIZE_GROUPS];
+
+  const filteredAnimals = animals.filter((animal) => {
+    if (selectedGroupFilter === "Tümü") return true;
+    return getSizeGroup(animal.group) === selectedGroupFilter;
+  });
+
   return (
     <div
       style={{
@@ -150,32 +159,52 @@ export function AnimalsTab({
             )}
           </div>
           <p className="mt-1 text-[13px] font-medium text-slate-500">
-            Toplam {animals.length} kurbanlık kayıtlı.
+            Toplam {animals.length} kurbanlık kayıtlı
+            {selectedGroupFilter !== "Tümü" && (
+              <span> ({filteredAnimals.length} adet {selectedGroupFilter})</span>
+            )}
+            .
           </p>
           <div className="mt-3 flex gap-2">
+            <Select
+              value={selectedGroupFilter}
+              onValueChange={(v) => v && setSelectedGroupFilter(v)}
+            >
+              <SelectTrigger className="!h-auto flex-1 rounded-[10px] border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-none">
+                <SelectValue />
+                <ListFilter className="ml-1 h-3.5 w-3.5 text-slate-500" />
+              </SelectTrigger>
+              <SelectContent>
+                {groupOptions.map((opt) => (
+                  <SelectItem key={opt} value={opt}>
+                    {opt}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <button
               type="button"
               onClick={() => setCloudinaryOpen(true)}
-              className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[10px] border bg-white py-3 text-xs font-semibold ${
+              className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-[10px] border bg-white px-3 py-2 text-xs font-semibold ${
                 isCloudConfigured
                   ? "border-[#A7F3D0] text-[#0F9F6E]"
                   : "border-amber-300 text-amber-700"
               }`}
             >
               <Cloud
-                className={`h-4 w-4 ${
+                className={`h-3.5 w-3.5 ${
                   isCloudConfigured ? "text-[#0F9F6E]" : "text-amber-500"
                 }`}
               />
-              <span>{isCloudConfigured ? "Bulut ✓" : "Bulut Ayarla"}</span>
+              <span>{isCloudConfigured ? "Bulut ✓" : "Bulut"}</span>
             </button>
             <button
               type="button"
               onClick={() => setAddOpen(true)}
-              className="flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-[10px] bg-[#0F9F6E] py-3 text-xs font-bold text-white"
+              className="flex cursor-pointer items-center justify-center gap-1.5 rounded-[10px] bg-[#0F9F6E] px-3.5 py-2 text-xs font-bold text-white"
             >
-              <Plus className="h-4 w-4" />
-              <span>Yeni Ekle</span>
+              <Plus className="h-3.5 w-3.5" />
+              <span>Yeni</span>
             </button>
           </div>
         </div>
@@ -194,10 +223,30 @@ export function AnimalsTab({
               )}
             </div>
             <p className="mt-1 text-[13px] font-medium text-slate-500">
-              Toplam {animals.length} kurbanlık kayıtlı.
+              Toplam {animals.length} kurbanlık kayıtlı
+              {selectedGroupFilter !== "Tümü" && (
+                <span> ({filteredAnimals.length} adet {selectedGroupFilter})</span>
+              )}
+              .
             </p>
           </div>
           <div className="flex items-center gap-3">
+            <Select
+              value={selectedGroupFilter}
+              onValueChange={(v) => v && setSelectedGroupFilter(v)}
+            >
+              <SelectTrigger className="!h-auto w-[160px] rounded-[10px] border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-none">
+                <SelectValue />
+                <ListFilter className="ml-1 h-4 w-4 text-slate-500" />
+              </SelectTrigger>
+              <SelectContent>
+                {groupOptions.map((opt) => (
+                  <SelectItem key={opt} value={opt}>
+                    {opt}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <button
               type="button"
               onClick={() => setCloudinaryOpen(true)}
@@ -232,19 +281,23 @@ export function AnimalsTab({
 
       {/* Animals Grid */}
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
-        {animals.length === 0 ? (
+        {filteredAnimals.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
             <PawPrint className="h-14 w-14 text-slate-300" />
             <p className="mt-4 text-base text-slate-400">
-              Henüz kurbanlık eklenmemiş.
+              {selectedGroupFilter === "Tümü"
+                ? "Henüz kurbanlık eklenmemiş."
+                : `${selectedGroupFilter} grubunda kurbanlık bulunamadı.`}
             </p>
             <p className="mt-2 text-[13px] text-slate-400">
-              Yukarıdaki butona tıklayarak kurbanlık ekleyebilirsiniz.
+              {selectedGroupFilter === "Tümü"
+                ? "Yukarıdaki butona tıklayarak kurbanlık ekleyebilirsiniz."
+                : "Filtreyi 'Tümü' olarak değiştirebilir veya bu gruba yeni kurbanlık ekleyebilirsiniz."}
             </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 items-start gap-4 pb-6 min-[400px]:grid-cols-2 min-[600px]:grid-cols-3 min-[900px]:grid-cols-4 min-[1200px]:grid-cols-5 min-[1500px]:grid-cols-6">
-            {animals.map((animal) => (
+            {filteredAnimals.map((animal) => (
               <AnimalCard
                 key={animal.id}
                 animal={animal}
