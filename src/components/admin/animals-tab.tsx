@@ -147,132 +147,173 @@ export function AnimalsTab({
       {/* Top bar */}
       {isMobile ? (
         <div>
-          <div className="flex items-center gap-2">
-            <h3 className="text-lg font-extrabold text-[#1E293B]">
-              Kurbanlık Listesi
-            </h3>
-            {pendingCount > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
-                <Clock className="h-3 w-3" />
-                {pendingCount} onay bekleyen
-              </span>
-            )}
-          </div>
-          <p className="mt-1 text-[13px] font-medium text-slate-500">
-            Toplam {animals.length} kurbanlık kayıtlı
-            {selectedGroupFilter !== "Tümü" && (
-              <span> ({filteredAnimals.length} adet {selectedGroupFilter})</span>
-            )}
-            .
-          </p>
-          <div className="mt-3 flex gap-2">
-            <Select
-              value={selectedGroupFilter}
-              onValueChange={(v) => v && setSelectedGroupFilter(v)}
-            >
-              <SelectTrigger className="!h-auto flex-1 rounded-[10px] border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-none">
-                <SelectValue />
-                <ListFilter className="ml-1 h-3.5 w-3.5 text-slate-500" />
-              </SelectTrigger>
-              <SelectContent>
-                {groupOptions.map((opt) => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <button
-              type="button"
-              onClick={() => setCloudinaryOpen(true)}
-              className={`flex cursor-pointer items-center justify-center gap-1.5 rounded-[10px] border bg-white px-3 py-2 text-xs font-semibold ${
-                isCloudConfigured
-                  ? "border-[#A7F3D0] text-[#0F9F6E]"
-                  : "border-amber-300 text-amber-700"
-              }`}
-            >
-              <Cloud
-                className={`h-3.5 w-3.5 ${
-                  isCloudConfigured ? "text-[#0F9F6E]" : "text-amber-500"
-                }`}
-              />
-              <span>{isCloudConfigured ? "Bulut ✓" : "Bulut"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="flex cursor-pointer items-center justify-center gap-1.5 rounded-[10px] bg-[#0F9F6E] px-3.5 py-2 text-xs font-bold text-white"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              <span>Yeni</span>
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="flex items-center gap-2.5">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
               <h3 className="text-lg font-extrabold text-[#1E293B]">
                 Kurbanlık Listesi
               </h3>
               {pendingCount > 0 && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
+                <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800">
                   <Clock className="h-3 w-3" />
-                  {pendingCount} onay bekleyen başvuru
+                  {pendingCount}
                 </span>
               )}
             </div>
-            <p className="mt-1 text-[13px] font-medium text-slate-500">
-              Toplam {animals.length} kurbanlık kayıtlı
-              {selectedGroupFilter !== "Tümü" && (
-                <span> ({filteredAnimals.length} adet {selectedGroupFilter})</span>
-              )}
-              .
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Select
-              value={selectedGroupFilter}
-              onValueChange={(v) => v && setSelectedGroupFilter(v)}
-            >
-              <SelectTrigger className="!h-auto w-[160px] rounded-[10px] border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 shadow-none">
-                <SelectValue />
-                <ListFilter className="ml-1 h-4 w-4 text-slate-500" />
-              </SelectTrigger>
-              <SelectContent>
-                {groupOptions.map((opt) => (
-                  <SelectItem key={opt} value={opt}>
-                    {opt}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <button
-              type="button"
-              onClick={() => setCloudinaryOpen(true)}
-              className={`flex cursor-pointer items-center gap-2 rounded-[10px] border bg-white px-4 py-3 text-sm font-semibold transition-colors hover:bg-slate-50 ${
-                isCloudConfigured
-                  ? "border-[#A7F3D0] text-[#0F9F6E]"
-                  : "border-amber-300 text-amber-700"
-              }`}
-            >
-              <Cloud
-                className={`h-[18px] w-[18px] ${
-                  isCloudConfigured ? "text-[#0F9F6E]" : "text-amber-500"
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCloudinaryOpen(true)}
+                className={`flex cursor-pointer items-center justify-center gap-1 rounded-[10px] border bg-white px-2.5 py-1.5 text-xs font-semibold ${
+                  isCloudConfigured
+                    ? "border-[#A7F3D0] text-[#0F9F6E]"
+                    : "border-amber-300 text-amber-700"
                 }`}
-              />
-              <span>
-                {isCloudConfigured ? "Cloudinary ✓" : "Cloudinary Ayarla"}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setAddOpen(true)}
-              className="flex cursor-pointer items-center gap-2 rounded-[10px] bg-[#0F9F6E] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0d8b60]"
-            >
-              <Plus className="h-[18px] w-[18px]" />
-              <span>Yeni Kurbanlık Ekle</span>
-            </button>
+              >
+                <Cloud
+                  className={`h-3.5 w-3.5 ${
+                    isCloudConfigured ? "text-[#0F9F6E]" : "text-amber-500"
+                  }`}
+                />
+                <span>{isCloudConfigured ? "Bulut ✓" : "Bulut"}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddOpen(true)}
+                className="flex cursor-pointer items-center justify-center gap-1 rounded-[10px] bg-[#0F9F6E] px-3 py-1.5 text-xs font-bold text-white shadow-sm"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Yeni Ekle</span>
+              </button>
+            </div>
+          </div>
+
+          <p className="mt-1 text-[13px] font-medium text-slate-500">
+            Toplam {animals.length} kurbanlık
+            {selectedGroupFilter !== "Tümü" && (
+              <span> ({filteredAnimals.length} {selectedGroupFilter})</span>
+            )}
+            .
+          </p>
+
+          {/* Group Filter Buttons (Mobile) */}
+          <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {groupOptions.map((opt) => {
+              const active = selectedGroupFilter === opt;
+              const count =
+                opt === "Tümü"
+                  ? animals.length
+                  : animals.filter((a) => getSizeGroup(a.group) === opt).length;
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setSelectedGroupFilter(opt)}
+                  className={`flex shrink-0 cursor-pointer items-center gap-1.5 rounded-xl px-3 py-1.5 text-xs font-bold transition-all ${
+                    active
+                      ? "bg-slate-900 text-white shadow"
+                      : "border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                  }`}
+                >
+                  <span>{opt}</span>
+                  <span
+                    className={`rounded-full px-1.5 py-0.2 text-[10px] font-extrabold ${
+                      active
+                        ? "bg-white/20 text-white"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <div>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h3 className="text-xl font-extrabold text-[#1E293B]">
+                  Kurbanlık Listesi
+                </h3>
+                {pendingCount > 0 && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
+                    <Clock className="h-3 w-3" />
+                    {pendingCount} onay bekleyen başvuru
+                  </span>
+                )}
+              </div>
+              <p className="mt-1 text-[13px] font-medium text-slate-500">
+                Toplam {animals.length} kurbanlık kayıtlı
+                {selectedGroupFilter !== "Tümü" && (
+                  <span> ({filteredAnimals.length} adet {selectedGroupFilter})</span>
+                )}
+                .
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setCloudinaryOpen(true)}
+                className={`flex cursor-pointer items-center gap-2 rounded-[10px] border bg-white px-4 py-3 text-sm font-semibold transition-colors hover:bg-slate-50 ${
+                  isCloudConfigured
+                    ? "border-[#A7F3D0] text-[#0F9F6E]"
+                    : "border-amber-300 text-amber-700"
+                }`}
+              >
+                <Cloud
+                  className={`h-[18px] w-[18px] ${
+                    isCloudConfigured ? "text-[#0F9F6E]" : "text-amber-500"
+                  }`}
+                />
+                <span>
+                  {isCloudConfigured ? "Cloudinary ✓" : "Cloudinary Ayarla"}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setAddOpen(true)}
+                className="flex cursor-pointer items-center gap-2 rounded-[10px] bg-[#0F9F6E] px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-[#0d8b60]"
+              >
+                <Plus className="h-[18px] w-[18px]" />
+                <span>Yeni Kurbanlık Ekle</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Group Filter Buttons (Desktop) */}
+          <div className="mt-4 flex items-center gap-2">
+            {groupOptions.map((opt) => {
+              const active = selectedGroupFilter === opt;
+              const count =
+                opt === "Tümü"
+                  ? animals.length
+                  : animals.filter((a) => getSizeGroup(a.group) === opt).length;
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setSelectedGroupFilter(opt)}
+                  className={`flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all ${
+                    active
+                      ? "bg-slate-900 text-white shadow-md shadow-slate-900/10"
+                      : "border border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  <span>{opt}</span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-black ${
+                      active
+                        ? "bg-white/20 text-white"
+                        : "bg-slate-100 text-slate-500"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
