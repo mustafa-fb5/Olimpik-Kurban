@@ -3,6 +3,7 @@
 import { useState } from "react";
 import {
   Check,
+  Clock,
   Download,
   Filter,
   ListFilter,
@@ -30,6 +31,7 @@ import {
 import {
   useSiteData,
   getSizeGroup,
+  getPendingRemainingTime,
   type Animal,
   type Registration,
 } from "@/lib/site-data";
@@ -395,20 +397,35 @@ export function RegistrationsTab({
 
                       {/* Group / Type */}
                       <td className="px-6 py-2">
-                        <span
-                          className={`inline-block rounded-md border px-2 py-1 text-xs font-bold ${
-                            isDonation
-                              ? "border-amber-200 bg-amber-50 text-amber-800"
-                              : "border-emerald-200 bg-emerald-50 text-emerald-800"
-                          }`}
-                        >
-                          {isDonation ? "Bağış Hisse" : reg.group}
-                        </span>
-                        {reg.status === "pending" && (
-                          <span className="ml-1.5 inline-block rounded-md border border-amber-300 bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800">
-                            Onay Bekliyor
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span
+                            className={`inline-block rounded-md border px-2 py-1 text-xs font-bold ${
+                              isDonation
+                                ? "border-amber-200 bg-amber-50 text-amber-800"
+                                : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                            }`}
+                          >
+                            {isDonation ? "Bağış Hisse" : reg.group}
                           </span>
-                        )}
+                          {reg.status === "pending" && (
+                            (() => {
+                              const rem = getPendingRemainingTime(reg.createdAt);
+                              return (
+                                <span
+                                  title="14 gün içinde en az 10.000 ₺ kapora bekleniyor"
+                                  className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs font-bold ${
+                                    rem.isExpired
+                                      ? "border-red-300 bg-red-100 text-red-800"
+                                      : "border-amber-300 bg-amber-100 text-amber-800"
+                                  }`}
+                                >
+                                  <Clock className="h-3 w-3 shrink-0" />
+                                  <span>{rem.text}</span>
+                                </span>
+                              );
+                            })()
+                          )}
+                        </div>
                       </td>
 
                       {/* Note */}

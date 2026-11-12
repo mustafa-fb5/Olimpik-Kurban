@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import {
   SIZE_GROUPS,
   getSizeGroup,
+  getPendingRemainingTime,
   useSiteData,
   type Animal,
   type Registration,
@@ -284,23 +285,11 @@ function PendingSlotButton({
 
   useEffect(() => {
     const calc = () => {
-      const created = registration?.createdAt ? new Date(registration.createdAt).getTime() : Date.now();
-      const deadline = created + 14 * 24 * 60 * 60 * 1000;
-      const diffMs = deadline - Date.now();
-
-      if (diffMs <= 0) {
+      const rem = getPendingRemainingTime(registration?.createdAt);
+      if (rem.isExpired) {
         setCountdown("Süre doldu");
-        return;
-      }
-
-      const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-      const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-      const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-
-      if (days >= 1) {
-        setCountdown(`${days} gün ${hours} sa kaldı`);
       } else {
-        setCountdown(`${hours} sa ${minutes} dk kaldı`);
+        setCountdown(`${rem.text} kaldı`);
       }
     };
 

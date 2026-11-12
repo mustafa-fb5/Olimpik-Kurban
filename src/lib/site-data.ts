@@ -46,6 +46,39 @@ export interface Registration {
 export const SIZE_GROUPS = ["Küçük Grup", "Orta Grup", "Büyük Grup"] as const;
 export type SizeGroup = (typeof SIZE_GROUPS)[number];
 
+export const PENDING_HOLD_DAYS = 14;
+
+export function getPendingRemainingTime(createdAtIso: string | undefined): {
+  isExpired: boolean;
+  text: string;
+  days: number;
+  hours: number;
+  minutes: number;
+} {
+  const created = createdAtIso ? new Date(createdAtIso).getTime() : Date.now();
+  const deadline = created + PENDING_HOLD_DAYS * 24 * 60 * 60 * 1000;
+  const diffMs = deadline - Date.now();
+
+  if (diffMs <= 0) {
+    return { isExpired: true, text: "Süre Doldu", days: 0, hours: 0, minutes: 0 };
+  }
+
+  const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+  let text = "";
+  if (days >= 1) {
+    text = `${days} gün ${hours} sa`;
+  } else if (hours >= 1) {
+    text = `${hours} sa ${minutes} dk`;
+  } else {
+    text = `${Math.max(1, minutes)} dk`;
+  }
+
+  return { isExpired: false, text, days, hours, minutes };
+}
+
 /** Hayvanın grubunu 3 boyut grubundan birine eşler (eski "1. Grup" kayıtları dahil). */
 export function getSizeGroup(group: string | undefined | null): SizeGroup {
   const g = (group ?? "").toString().trim().toLowerCase();

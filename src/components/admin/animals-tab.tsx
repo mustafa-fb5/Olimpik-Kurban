@@ -43,6 +43,7 @@ import { cloudinaryService, pickImage } from "@/lib/cloudinary";
 import {
   SIZE_GROUPS,
   getSizeGroup,
+  getPendingRemainingTime,
   useSiteData,
   type Animal,
   type Registration,
@@ -650,21 +651,33 @@ function AnimalCard({
                 <div className="ml-1.5 min-w-0 flex-1">
                   {isEmpty ? (
                     pendingReg ? (
-                      <div>
-                        <div className="flex items-center gap-1">
-                          <span className="truncate text-[10px] font-extrabold text-amber-900">
-                            {pendingReg.name}
-                          </span>
-                          <span className="rounded bg-amber-200/80 px-1 py-0.2 text-[8px] font-bold text-amber-800">
-                            Onay Bekliyor
-                          </span>
-                        </div>
-                        {pendingReg.phone && (
-                          <div className="text-[9px] text-amber-700">
-                            {pendingReg.phone}
+                      (() => {
+                        const rem = getPendingRemainingTime(pendingReg.createdAt);
+                        return (
+                          <div>
+                            <div className="flex flex-wrap items-center gap-1">
+                              <span className="truncate text-[10px] font-extrabold text-amber-900">
+                                {pendingReg.name}
+                              </span>
+                              <span
+                                className={`inline-flex items-center gap-0.5 rounded px-1 py-0.2 text-[8px] font-bold ${
+                                  rem.isExpired
+                                    ? "bg-red-200 text-red-900"
+                                    : "bg-amber-200/90 text-amber-900"
+                                }`}
+                              >
+                                <Clock className="h-2 w-2" />
+                                {rem.text}
+                              </span>
+                            </div>
+                            {pendingReg.phone && (
+                              <div className="text-[9px] text-amber-700">
+                                {pendingReg.phone}
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
+                        );
+                      })()
                     ) : (
                       <span className="text-[10px] italic text-slate-400">
                         Boş Hisse — Ata
