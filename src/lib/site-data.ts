@@ -89,12 +89,19 @@ export function getSizeGroup(group: string | undefined | null): SizeGroup {
   return "Orta Grup";
 }
 
+export interface PaymentInstallment {
+  amount: number;
+  date: string;
+}
+
 export interface Shareholder {
   slot: number;
   name: string;
   phone: string;
   isTekDuzen: boolean;
   hasVekalet: boolean;
+  totalAmount?: number;
+  payments?: (PaymentInstallment | null)[];
 }
 
 export interface Animal {
@@ -221,6 +228,8 @@ function normalizeShareholders(raw: any[] | undefined | null): Shareholder[] {
       phone: e?.phone ?? "",
       isTekDuzen: e?.isTekDuzen ?? false,
       hasVekalet: e?.hasVekalet ?? false,
+      totalAmount: typeof e?.totalAmount === "number" ? e.totalAmount : undefined,
+      payments: Array.isArray(e?.payments) ? e.payments : undefined,
     };
   });
 }
@@ -754,6 +763,25 @@ class SiteDataService {
 
   removeAnimalShareholder(animalId: string, slotIndex: number) {
     return this.updateAnimalShareholder(animalId, slotIndex, "", "");
+  }
+
+  async updateAnimalShareholderPayment(
+    animalId: string,
+    slotIndex: number,
+    totalAmount: number,
+    payments: (PaymentInstallment | null)[],
+  ) {
+    const idx = this.animals.findIndex((a) => a.id === animalId);
+    if (idx === -1) return;
+    const target = this.animals[idx];
+    const shareholders = target.shareholders.map((s) => ({ ...s }));
+    shareholders[slotIndex].totalAmount = totalAmount;
+    shareholders[slotIndex].payments = payments;
+    target.shareholders = shareholders;
+
+    this.notifyListeners();
+    this.saveToLocal();
+    await this.updateAnimalInFirestore(target);
   }
 
   async deleteAnimal(id: string) {

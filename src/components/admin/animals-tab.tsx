@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  Banknote,
   Camera,
   Check,
   CheckCircle2,
@@ -41,6 +42,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cloudinaryService, pickImage } from "@/lib/cloudinary";
+import { PaymentDialog } from "./payment-dialog";
 import {
   SIZE_GROUPS,
   getSizeGroup,
@@ -76,6 +78,11 @@ export function AnimalsTab({
     animalId: string;
     slotIndex: number;
     existing: Shareholder;
+  } | null>(null);
+  const [paymentDialog, setPaymentDialog] = useState<{
+    animal: Animal;
+    slotIndex: number;
+    shareholder: Shareholder;
   } | null>(null);
 
   const toggleExpand = (id: string) => {
@@ -394,6 +401,13 @@ export function AnimalsTab({
                     toast.error("Başvuru onaylanamadı (slot dolu olabilir).");
                   }
                 }}
+                onOpenPayment={(slotIndex, sh) =>
+                  setPaymentDialog({
+                    animal,
+                    slotIndex,
+                    shareholder: sh,
+                  })
+                }
               />
             ))}
           </div>
@@ -448,6 +462,24 @@ export function AnimalsTab({
               name,
               phone,
               { isTekDuzen, hasVekalet },
+            );
+          }}
+        />
+      )}
+
+      {/* Payment Dialog */}
+      {paymentDialog && (
+        <PaymentDialog
+          animal={paymentDialog.animal}
+          slotIndex={paymentDialog.slotIndex}
+          shareholder={paymentDialog.shareholder}
+          onClose={() => setPaymentDialog(null)}
+          onSave={async (totalAmount, payments) => {
+            await service.updateAnimalShareholderPayment(
+              paymentDialog.animal.id,
+              paymentDialog.slotIndex,
+              totalAmount,
+              payments,
             );
           }}
         />
@@ -529,6 +561,7 @@ function AnimalCard({
   onRemoveSlot,
   pendingRegistrations = [],
   onApprovePending,
+  onOpenPayment,
 }: {
   animal: Animal;
   expanded: boolean;
@@ -543,6 +576,7 @@ function AnimalCard({
   onRemoveSlot: (slotIndex: number) => void;
   pendingRegistrations?: Registration[];
   onApprovePending?: (regId: string) => void;
+  onOpenPayment: (slotIndex: number, sh: Shareholder) => void;
 }) {
   const [imgError, setImgError] = useState(false);
   const photoUrl = animal.photoUrl ?? "";
@@ -813,6 +847,20 @@ function AnimalCard({
                     onClick={(e) => e.stopPropagation()}
                     className="flex shrink-0 items-center gap-1"
                   >
+                    <button
+                      type="button"
+                      onClick={() => onOpenPayment(i, sh)}
+                      title="Ödeme"
+                      className={`flex h-5 w-5 cursor-pointer items-center justify-center rounded-full border-[1.2px] ${
+                        (sh.totalAmount ?? 0) > 0 &&
+                        (sh.payments ?? []).reduce((s, p) => s + (p?.amount ?? 0), 0) >=
+                          (sh.totalAmount ?? 0)
+                          ? "border-emerald-600 bg-emerald-500 text-white"
+                          : "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                      }`}
+                    >
+                      <Banknote className="h-3 w-3" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => onToggleTekDuzen(i, sh)}
