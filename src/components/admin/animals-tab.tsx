@@ -451,8 +451,10 @@ export function AnimalsTab({
       {/* Shareholder Dialog */}
       {shDialog && (
         <ShareholderDialog
+          animalId={shDialog.animalId}
           slotIndex={shDialog.slotIndex}
           existing={shDialog.existing}
+          animals={service.animals}
           registrations={service.registrations}
           onClose={() => setShDialog(null)}
           onSave={async (name, phone, isTekDuzen, hasVekalet) => {
@@ -463,6 +465,35 @@ export function AnimalsTab({
               phone,
               { isTekDuzen, hasVekalet },
             );
+          }}
+          onMoveToAnimal={async (targetAnimalId, targetSlotIndex) => {
+            const name = shDialog.existing.name;
+            const phone = shDialog.existing.phone;
+            const isTekDuzen = shDialog.existing.isTekDuzen === true;
+            const hasVekalet = shDialog.existing.hasVekalet === true;
+            await service.updateAnimalShareholder(
+              targetAnimalId,
+              targetSlotIndex,
+              name,
+              phone,
+              { isTekDuzen, hasVekalet },
+            );
+            if (
+              shDialog.existing.totalAmount !== undefined ||
+              shDialog.existing.payments !== undefined
+            ) {
+              await service.updateAnimalShareholderPayment(
+                targetAnimalId,
+                targetSlotIndex,
+                shDialog.existing.totalAmount ?? 0,
+                shDialog.existing.payments ?? [null, null, null],
+              );
+            }
+            await service.removeAnimalShareholder(
+              shDialog.animalId,
+              shDialog.slotIndex,
+            );
+            toast.success("Hissedar seçilen kurbanlığa atandı.");
           }}
         />
       )}
@@ -752,7 +783,7 @@ function AnimalCard({
               <div
                 key={i}
                 onClick={() => onSelectSlot(i, sh)}
-                className={`flex cursor-pointer items-center rounded-md px-2 py-1.5 ${
+                className={`flex cursor-pointer flex-wrap items-center justify-between gap-1.5 rounded-md px-2 py-1.5 ${
                   isEmpty
                     ? pendingReg
                       ? "border-[1.5px] border-amber-400 bg-amber-50/70"
@@ -762,67 +793,69 @@ function AnimalCard({
                       : "border border-slate-200 bg-white"
                 }`}
               >
-                <div
-                  className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white ${
-                    isEmpty
-                      ? pendingReg
-                        ? "bg-amber-500"
-                        : "bg-slate-300"
-                      : isTekDuzen
-                        ? "bg-emerald-500"
-                        : "bg-slate-500"
-                  }`}
-                >
-                  {i + 1}
-                </div>
+                <div className="flex min-w-0 flex-1 items-center">
+                  <div
+                    className={`flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-full text-[9px] font-bold text-white ${
+                      isEmpty
+                        ? pendingReg
+                          ? "bg-amber-500"
+                          : "bg-slate-300"
+                        : isTekDuzen
+                          ? "bg-emerald-500"
+                          : "bg-slate-500"
+                    }`}
+                  >
+                    {i + 1}
+                  </div>
 
-                <div className="ml-1.5 min-w-0 flex-1">
-                  {isEmpty ? (
-                    pendingReg ? (
-                      (() => {
-                        const rem = getPendingRemainingTime(pendingReg.createdAt);
-                        return (
-                          <div>
-                            <div className="flex flex-wrap items-center gap-1">
-                              <span className="truncate text-[10px] font-extrabold text-amber-900">
-                                {pendingReg.name}
-                              </span>
-                              <span
-                                className={`inline-flex items-center gap-0.5 rounded px-1 py-0.2 text-[8px] font-bold ${
-                                  rem.isExpired
-                                    ? "bg-red-200 text-red-900"
-                                    : "bg-amber-200/90 text-amber-900"
-                                }`}
-                              >
-                                <Clock className="h-2 w-2" />
-                                {rem.text}
-                              </span>
-                            </div>
-                            {pendingReg.phone && (
-                              <div className="text-[9px] text-amber-700">
-                                {pendingReg.phone}
+                  <div className="ml-1.5 min-w-0 flex-1">
+                    {isEmpty ? (
+                      pendingReg ? (
+                        (() => {
+                          const rem = getPendingRemainingTime(pendingReg.createdAt);
+                          return (
+                            <div>
+                              <div className="flex flex-wrap items-center gap-1">
+                                <span className="break-words text-[10px] font-extrabold text-amber-900">
+                                  {pendingReg.name}
+                                </span>
+                                <span
+                                  className={`inline-flex items-center gap-0.5 rounded px-1 py-0.2 text-[8px] font-bold ${
+                                    rem.isExpired
+                                      ? "bg-red-200 text-red-900"
+                                      : "bg-amber-200/90 text-amber-900"
+                                  }`}
+                                >
+                                  <Clock className="h-2 w-2" />
+                                  {rem.text}
+                                </span>
                               </div>
-                            )}
-                          </div>
-                        );
-                      })()
+                              {pendingReg.phone && (
+                                <div className="text-[9px] text-amber-700">
+                                  {pendingReg.phone}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()
+                      ) : (
+                        <span className="text-[10px] italic text-slate-400">
+                          Boş Hisse — Ata
+                        </span>
+                      )
                     ) : (
-                      <span className="text-[10px] italic text-slate-400">
-                        Boş Hisse — Ata
-                      </span>
-                    )
-                  ) : (
-                    <div>
-                      <div className="truncate text-[10px] font-bold text-slate-700">
-                        {sh.name}
-                      </div>
-                      {sh.phone && (
-                        <div className="text-[9px] text-slate-500">
-                          {sh.phone}
+                      <div>
+                        <div className="break-words text-[10px] font-bold leading-tight text-slate-700">
+                          {sh.name}
                         </div>
-                      )}
-                    </div>
-                  )}
+                        {sh.phone && (
+                          <div className="text-[9px] text-slate-500">
+                            {sh.phone}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {pendingReg && isEmpty && (
@@ -1032,14 +1065,19 @@ function AnimalFormDialog({
 }
 
 function ShareholderDialog({
+  animalId,
   slotIndex,
   existing,
+  animals,
   registrations,
   onClose,
   onSave,
+  onMoveToAnimal,
 }: {
+  animalId: string;
   slotIndex: number;
   existing: Shareholder;
+  animals: Animal[];
   registrations: ReturnType<typeof useSiteData>["registrations"];
   onClose: () => void;
   onSave: (
@@ -1048,17 +1086,30 @@ function ShareholderDialog({
     isTekDuzen: boolean,
     hasVekalet: boolean,
   ) => Promise<void>;
+  onMoveToAnimal: (
+    targetAnimalId: string,
+    targetSlotIndex: number,
+  ) => Promise<void>;
 }) {
   const [name, setName] = useState(existing.name ?? "");
   const [phone, setPhone] = useState(existing.phone ?? "");
   const [isTekDuzen, setIsTekDuzen] = useState(existing.isTekDuzen === true);
   const [hasVekalet, setHasVekalet] = useState(existing.hasVekalet === true);
+  const [targetAnimalId, setTargetAnimalId] = useState<string>("");
+  const [targetSlotIndex, setTargetSlotIndex] = useState<string>("");
+  const [moving, setMoving] = useState(false);
+
+  const otherAnimals = animals.filter((a) => a.id !== animalId);
+  const selectedTargetAnimal = otherAnimals.find((a) => a.id === targetAnimalId);
+  const availableSlots = (selectedTargetAnimal?.shareholders ?? [])
+    .map((s, idx) => ({ s, idx }))
+    .filter(({ s }) => !(s.name ?? "").trim());
 
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="max-w-[440px] rounded-2xl p-6"
+        className="max-h-[90vh] max-w-[760px] overflow-y-auto rounded-2xl p-6"
       >
         <DialogHeader>
           <DialogTitle className="text-lg font-extrabold text-slate-900">
@@ -1066,7 +1117,8 @@ function ShareholderDialog({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="mt-2 space-y-4">
+        <div className="mt-2 grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="space-y-4">
           <button
             type="button"
             onClick={() => {
@@ -1123,6 +1175,83 @@ function ShareholderDialog({
             />
             <div className="text-sm font-semibold text-slate-800">V</div>
           </label>
+          </div>
+
+          <div className="space-y-4">
+          {existing.name && otherAnimals.length > 0 && (
+            <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-3">
+              <div className="text-[13px] font-semibold text-slate-600">
+                Kurbanlığa Ata (Başka Kurbanlığa Taşı):
+              </div>
+              <div className="mt-2 space-y-2">
+                <Select
+                  value={targetAnimalId}
+                  onValueChange={(val) => {
+                    setTargetAnimalId(val ?? "");
+                    setTargetSlotIndex("");
+                  }}
+                >
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue placeholder="Kurbanlık seçin..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {otherAnimals.map((a) => {
+                      const emptyCount = (a.shareholders ?? []).filter(
+                        (s) => !(s.name ?? "").trim(),
+                      ).length;
+                      return (
+                        <SelectItem
+                          key={a.id}
+                          value={a.id}
+                          disabled={emptyCount === 0}
+                        >
+                          {a.kesimNo ? `${a.kesimNo}. Kurbanlık` : a.name} (
+                          {a.group}) — {emptyCount} boş
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+
+                {selectedTargetAnimal && (
+                  <div className="flex items-center gap-2">
+                    <Select
+                      value={targetSlotIndex}
+                      onValueChange={(val) => setTargetSlotIndex(val ?? "")}
+                    >
+                      <SelectTrigger className="h-9 flex-1 text-xs">
+                        <SelectValue placeholder="Boş hisse seçin..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableSlots.map(({ idx }) => (
+                          <SelectItem key={idx} value={String(idx)}>
+                            Hisse {idx + 1}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <button
+                      type="button"
+                      disabled={!targetSlotIndex || moving}
+                      onClick={async () => {
+                        if (!targetAnimalId || targetSlotIndex === "") return;
+                        setMoving(true);
+                        await onMoveToAnimal(
+                          targetAnimalId,
+                          Number(targetSlotIndex),
+                        );
+                        setMoving(false);
+                        onClose();
+                      }}
+                      className="cursor-pointer rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {moving ? "Atanıyor..." : "Kurbanlığa Ata"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {registrations.length > 0 && (
             <div className="border-t border-slate-200 pt-3">
@@ -1169,9 +1298,10 @@ function ShareholderDialog({
               </div>
             </div>
           )}
+          </div>
         </div>
 
-        <div className="mt-5 flex justify-end gap-2">
+        <div className="mt-5 flex justify-end gap-2 border-t border-slate-100 pt-3">
           <button
             type="button"
             onClick={onClose}

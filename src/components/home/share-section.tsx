@@ -68,7 +68,7 @@ export function ShareSection() {
         </div>
 
         {/* Group tabs */}
-        <div className="mx-auto mt-8 grid max-w-[640px] grid-cols-3 rounded-[18px] bg-slate-100 p-1">
+        <div className="mx-auto mt-8 grid max-w-[760px] grid-cols-2 gap-1 rounded-[18px] bg-slate-100 p-1 sm:grid-cols-4">
           {SIZE_GROUPS.map((g) => {
             const active = g === activeGroup;
             return (

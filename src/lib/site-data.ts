@@ -43,7 +43,7 @@ export interface Registration {
   firestorePath?: string;
 }
 
-export const SIZE_GROUPS = ["Küçük Grup", "Orta Grup", "Büyük Grup"] as const;
+export const SIZE_GROUPS = ["Düve", "Küçük Grup", "Orta Grup", "Büyük Grup"] as const;
 export type SizeGroup = (typeof SIZE_GROUPS)[number];
 
 export const PENDING_HOLD_DAYS = 14;
@@ -82,6 +82,7 @@ export function getPendingRemainingTime(createdAtIso: string | undefined): {
 /** Hayvanın grubunu 3 boyut grubundan birine eşler (eski "1. Grup" kayıtları dahil). */
 export function getSizeGroup(group: string | undefined | null): SizeGroup {
   const g = (group ?? "").toString().trim().toLowerCase();
+  if (g.startsWith("düve") || g.startsWith("duve")) return "Düve";
   if (g.startsWith("küçük") || g.startsWith("kucuk") || g.startsWith("1.")) return "Küçük Grup";
   if (g.startsWith("orta") || g.startsWith("2.")) return "Orta Grup";
   if (g.startsWith("büyük") || g.startsWith("buyuk") || g.startsWith("3.") || g.startsWith("4."))

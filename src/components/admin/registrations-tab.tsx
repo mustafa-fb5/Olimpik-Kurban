@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import {
+  Banknote,
   Check,
   Clock,
   Download,
@@ -34,7 +35,9 @@ import {
   getPendingRemainingTime,
   type Animal,
   type Registration,
+  type Shareholder,
 } from "@/lib/site-data";
+import { PaymentDialog } from "./payment-dialog";
 
 const STATUS_OPTIONS = [
   { value: "Tümü", label: "Tüm Durumlar" },
@@ -73,9 +76,33 @@ export function RegistrationsTab({
     name: string;
   } | null>(null);
   const [assignReg, setAssignReg] = useState<Registration | null>(null);
+  const [paymentDialog, setPaymentDialog] = useState<{
+    animal: Animal;
+    slotIndex: number;
+    shareholder: Shareholder;
+  } | null>(null);
+
+  const findShareholderTarget = (reg: Registration) => {
+    if (reg.animalId && reg.slotIndex !== undefined) {
+      const animal = service.animals.find((a) => a.id === reg.animalId);
+      const sh = animal?.shareholders[reg.slotIndex];
+      if (animal && sh) return { animal, slotIndex: reg.slotIndex, shareholder: sh };
+    }
+    const n = reg.name.trim().toLowerCase();
+    for (const animal of service.animals) {
+      const idx = animal.shareholders.findIndex(
+        (s) => s.name.trim().toLowerCase() === n,
+      );
+      if (idx !== -1) {
+        return { animal, slotIndex: idx, shareholder: animal.shareholders[idx] };
+      }
+    }
+    return null;
+  };
 
   const groupFilterOptions = [
     "Tümü",
+    "Düve",
     "Küçük Grup",
     "Orta Grup",
     "Büyük Grup",
@@ -358,7 +385,31 @@ export function RegistrationsTab({
                             </div>
                           </div>
 
-                          <div className="flex shrink-0 items-center gap-3">
+                          <div className="flex shrink-0 items-center gap-2">
+                            {(() => {
+                              const target = findShareholderTarget(reg);
+                              if (!target) return null;
+                              const isPaid =
+                                (target.shareholder.totalAmount ?? 0) > 0 &&
+                                (target.shareholder.payments ?? []).reduce(
+                                  (s, p) => s + (p?.amount ?? 0),
+                                  0,
+                                ) >= (target.shareholder.totalAmount ?? 0);
+                              return (
+                                <button
+                                  type="button"
+                                  onClick={() => setPaymentDialog(target)}
+                                  title="Ödeme"
+                                  className={`flex h-[22px] w-[22px] cursor-pointer items-center justify-center rounded-full border-[1.2px] ${
+                                    isPaid
+                                      ? "border-emerald-600 bg-emerald-500 text-white"
+                                      : "border-amber-400 bg-amber-50 text-amber-700 hover:bg-amber-100"
+                                  }`}
+                                >
+                                  <Banknote className="h-3.5 w-3.5" />
+                                </button>
+                              );
+                            })()}
                             <button
                               type="button"
                               onClick={() =>
@@ -544,6 +595,24 @@ export function RegistrationsTab({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Payment Dialog */}
+      {paymentDialog && (
+        <PaymentDialog
+          animal={paymentDialog.animal}
+          slotIndex={paymentDialog.slotIndex}
+          shareholder={paymentDialog.shareholder}
+          onClose={() => setPaymentDialog(null)}
+          onSave={async (totalAmount, payments) => {
+            await service.updateAnimalShareholderPayment(
+              paymentDialog.animal.id,
+              paymentDialog.slotIndex,
+              totalAmount,
+              payments,
+            );
+          }}
+        />
+      )}
 
       {/* Assign Registration Dialog */}
       {assignReg && (
